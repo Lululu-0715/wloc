@@ -31,7 +31,9 @@ iPhone ──WLOC 请求──▶ Apple ──坐标清单──▶ [代理拦�
 ├── build/
 │   └── obfuscate.js        # 混淆构建脚本（pnpm run build 重新生成 dist/）
 ├── worker/
-│   └── wloc-auth-worker.js # 授权码后端（Cloudflare Workers，可选）
+│   ├── wloc-auth-worker.js # 卡密后端（Cloudflare Workers + KV）
+│   ├── wrangler.toml       # 一键部署/CLI 部署配置
+│   └── package.json        # Worker 依赖（wrangler）
 ├── modules/
 │   ├── wloc.sgmodule     # Surge / Egern（支持参数化）
 │   ├── wloc.module       # Shadowrocket（小火箭）
@@ -139,12 +141,45 @@ Quantumult X 不支持参数传递，请用在线选点或直接改 `scripts/wlo
 
 ### 部署（Cloudflare Workers + KV，免费额度足够）
 
-1. 新建 KV 命名空间，绑定到 Worker，变量名必须是 **`AUTH_KV`**。
-2. Worker 环境变量添加 **`ADMIN_TOKEN`**（管理密码，建议 `openssl rand -hex 16`）。
-3. 粘贴 `worker/wloc-auth-worker.js` 的代码并部署。
-4. 地址填到 `scripts/wloc.js` 的 `DEFAULT_CONFIG.authUrl`（默认已指向
-   `https://wloc-1993.575613136.workers.dev/check`，合进选点 Worker 则不用改），
-   改完执行 `pnpm run build` 重新混淆。
+#### 方式一：一键部署（推荐）
+
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Lululu-0715/wloc/tree/main/worker)
+
+点击按钮 → 按提示授权 GitHub 并连接 Cloudflare → 自动完成部署，
+得到形如 `https://wloc-auth.<你的子域名>.workers.dev` 的地址。
+
+> 一键部署要求本仓库为 **public**（Cloudflare 需要拉取代码）。
+
+**部署后必做三步**（在 Cloudflare 后台操作）：
+
+1. **绑定 KV**：Workers & Pages → KV → 创建命名空间（任意名字）→
+   回到 `wloc-auth` Worker → Settings → Bindings → 添加 KV 绑定，
+   变量名必须是 **`AUTH_KV`**。
+2. **设置管理密码**：Worker → Settings → Variables → 添加 Secret
+   **`ADMIN_TOKEN`**（建议 `openssl rand -hex 16` 生成）。
+3. **验证**：浏览器访问
+   `https://wloc-auth.<子域名>.workers.dev/admin/create?token=密码&plan=monthly&count=1`，
+   返回卡密 JSON 即部署成功。
+
+#### 方式二：手动部署
+
+```bash
+cd worker
+npm install
+npx wrangler login        # 首次需要
+npm run deploy
+# 然后同样完成上面的「绑定 KV + 设置 ADMIN_TOKEN」两步
+```
+
+也可以不新建 Worker：把 `worker/wloc-auth-worker.js` 的 `/check` 和 `/admin`
+路由合并进你现有的选点 Worker，共用一个域名。
+
+#### 部署后：对接模块
+
+- 如果合并进了选点 Worker（`wloc-1993.575613136.workers.dev`），
+  `scripts/wloc.js` 里 `DEFAULT_CONFIG.authUrl` 的默认值正好就是它，**不用改**。
+- 如果用了一键部署的新 Worker，把 `authUrl` 改成
+  `https://wloc-auth.<子域名>.workers.dev/check`，然后 `pnpm run build` 重新混淆并推送。
 
 ### 日常运营（浏览器直接访问）
 
