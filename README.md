@@ -1,127 +1,115 @@
-# Apple WLOC 定位修改（fff最终版）
+# wloc
 
-修改 Apple 网络定位（WiFi / 基站）返回的坐标，实现 iOS 虚拟定位。
-拦截 WLOC 响应并改写经纬度，配合网页选点使用。
-
-> 本仓库基于社区维护版整理，已将所有地址指向本仓库，可独立订阅使用。
-> 核心脚本与可用版逐字节一致（MD5 校验通过），模块域名列表包含 Apple 新版定位接口。
+iOS 网络定位修改。拦截 Apple 定位服务返回的经纬度，换成你指定的位置。
 
 ---
 
-## 订阅地址
+## 装完不生效？先看这条
 
-| 客户端 | 订阅链接 |
+**MITM 域名必须 5 个，少一个都不行。** 少的最多的是 `gsp-ssl.ls.apple.com` —— Apple 新版定位接口，缺了它请求根本拦不到。
+
+```
+gs-loc.apple.com
+gs-loc-cn.apple.com
+gsp-ssl.ls.apple.com
+bluedot.is.autonavi.com
+bluedot.is.autonavi.com.gds.alibabadns.com
+```
+
+本仓库模块已带好，订阅后确认没被覆盖即可。
+
+---
+
+## 订阅
+
+| 客户端 | 链接 |
 |---|---|
-| **Shadowrocket（小火箭）** | `https://raw.githubusercontent.com/Lululu-0715/wloc/refs/heads/main/modules/wloc.module` |
+| **小火箭** | `https://raw.githubusercontent.com/Lululu-0715/wloc/refs/heads/main/modules/wloc.module` |
 | Surge / Egern | `https://raw.githubusercontent.com/Lululu-0715/wloc/refs/heads/main/modules/wloc.sgmodule` |
 | Quantumult X | `https://raw.githubusercontent.com/Lululu-0715/wloc/refs/heads/main/modules/wloc.conf` |
 | Loon | `https://raw.githubusercontent.com/Lululu-0715/wloc/refs/heads/main/modules/wloc.lpx` |
 | Stash | `https://raw.githubusercontent.com/Lululu-0715/wloc/refs/heads/main/modules/wloc.stoverride` |
 
----
-
-## 使用方法
-
-1. 订阅对应客户端的模块，启用模块
-2. 开启 **HTTPS 解密（MITM）**，确认域名列表包含：
-   ```
-   gs-loc.apple.com
-   gs-loc-cn.apple.com
-   gsp-ssl.ls.apple.com
-   bluedot.is.autonavi.com
-   bluedot.is.autonavi.com.gds.alibabadns.com
-   ```
-3. 安装并**信任** MITM 证书（设置 → 通用 → 关于本机 → 证书信任设置）
-4. 打开选点页面 `https://wloc.333012.xyz/`，选位置 → 「储存到设备」
-5. 打开地图验证
-
-> Safari 的保存请求必须经过代理客户端才能被拦截。
+小火箭用 `.module`，不是 `.sgmodule`。装之前把旧模块删掉。
 
 ---
 
-## 选点页面
+## 三个前提
 
-可直接用公共页面 `https://wloc.333012.xyz/`，也可用本仓库的 `worker/` 自己部署一个（见下方）。
+1. **开 HTTPS 解密**（有的客户端叫 MITM）
+2. **证书装两遍** —— 客户端装一次，再去 `设置 → 通用 → 关于本机 → 证书信任设置` 打开开关
+3. **走代理** —— 没开代理拦不到
 
 ---
 
-## 自建选点页面（Cloudflare Worker）
+## 用
 
-`worker/` 目录是一个纯静态页面服务，**不需要 KV、数据库或环境变量**。
+1. 打开 `https://wloc-1993.575613136.workers.dev`
+2. 地图上点选 / 搜地名 / 粘贴地图链接
+3. 点**储存到设备**
+4. 打开地图 App 看
 
-**方式一：命令行部署**
-```bash
-cd worker
-npx wrangler deploy
-```
+---
 
-**方式二：网页部署**
-Cloudflare Dashboard → Workers & Pages → 创建 Worker → 把 `worker/wloc-worker.js` 的内容整段粘贴进去 → 部署。
+## iOS 26+ 必须重启
 
-> `wrangler.jsonc` 的 `main` 已指向 `wloc-worker.js`。
-> `wrangler.pages.jsonc.disabled` 是 Pages 专用配置，用 Workers 部署时请保持禁用状态（已重命名）。
+系统会缓存旧坐标。脚本改成功了、日志也显示改了，但地图还是老位置 —— 是缓存，不是没生效。
+
+**只能重启设备。** 飞行模式、关定位都不管用。
+
+恢复真实定位同理，清完数据也要重启。
 
 ---
 
 ## 参数
 
-| 参数 | 含义 | 默认 |
+| 参数 | 说明 | 默认 |
 |---|---|---|
-| longitude / latitude | 目标经纬度 | 透传（不修改） |
-| accuracy | 精度（米） | 25 |
-| randomRadius | 随机扰动半径（米），0=关闭 | 0 |
-| logLevel | 日志级别 | info |
+| `longitude` / `latitude` | 目标坐标 | 透传 |
+| `accuracy` | 精度（米） | 25 |
+| `randomRadius` | 随机抖动半径（米），0 关闭 | 0 |
+| `logLevel` | 日志级别 | info |
 
-**优先级：** 页面保存的坐标 > 模块参数 > 默认值
+优先级：**页面存的坐标 > 模块参数 > 默认值**
 
-> **注意：** 默认占位坐标 `113.94114 / 22.544577` 被脚本判定为"未设置"，会进入透传模式。
-> 若要用模块参数生效，请改成其他坐标；正常使用建议直接在选点页面选点。
+默认值 `113.94114 / 22.544577` 被脚本当作"没设置"，会透传。想用模块参数就别用这两个数。
 
 ---
 
 ## 恢复真实定位
 
-- 关闭模块，或
-- 在选点页面点「清除数据」，或
-- 在客户端清除持久化数据（键名 `wloc_settings`）
+选点页面点**清除数据**，或直接关模块。然后重启。
 
-iOS 26+ 因系统定位缓存，可能需要重启设备才能生效。
+> 改过模块参数的，光清数据没用，参数也要改回默认值。
 
 ---
 
-## 注意事项
+## 排查
 
-- 仅修改网络定位（WiFi / 基站），**不影响 GPS 硬件定位**
-- 需要 MITM 证书信任，否则不生效
-- iOS 27 beta 6 起上游报告存在 TLS/MITM 限制，未做真机复核
-- 仅在自己拥有或获授权的设备上进行定位测试
+**订阅 404** → raw 缓存，等 1~2 分钟
+**提示"需要代理模块支持"** → 模块开关 / MITM / 证书 / 5 个域名，挨个查
+**提示成功但没变** → 重启设备
 
 ---
 
-## 文件结构
+## 文件
 
 ```
-├── dist/
-│   ├── wloc.js                      # 拦截 WLOC 响应，改写坐标
-│   └── wloc-settings.js             # 接收选点页面的保存请求
-├── modules/
-│   ├── wloc.module                  # Shadowrocket（小火箭用这个）
-│   ├── wloc.sgmodule                # Surge / Egern
-│   ├── wloc.conf                    # Quantumult X
-│   ├── wloc.lpx                     # Loon
-│   └── wloc.stoverride              # Stash
-├── worker/
-│   ├── wloc-worker.js               # 选点页面（Cloudflare Worker）
-│   ├── wrangler.jsonc               # Workers 部署配置
-│   ├── wrangler.pages.jsonc.disabled # Pages 配置（Workers 部署时保持禁用）
-│   ├── .gitignore
-│   └── dist/_routes.json            # Pages 路由配置
-├── docs/
-│   └── shortcut-guide.md            # 使用说明
-├── wloc.jpg                         # 模块图标
-├── README.md
-├── 安装说明.md
-└── .gitignore
+dist/          wloc.js（改坐标）  wloc-settings.js（收保存请求）
+modules/       wloc.module / .sgmodule / .conf / .lpx / .stoverride
+worker/        选点页面（wloc-worker.js + wrangler.jsonc）
+docs/          shortcut-guide.md
+wloc.jpg       图标
 ```
 
-> 只用小火箭的话，`dist/` + `modules/` 这 7 个文件是必须的，`worker/`、`docs/` 可不上传。
+只玩小火箭：`dist/` + `modules/` 共 7 个文件就够。
+
+**自建选点页面**：`worker/wloc-worker.js` 整段粘到 Cloudflare Workers 网页端控制台即可，不需要数据库和绑定。命令行则 `cd worker && npx wrangler deploy`。
+
+---
+
+## 说明
+
+只改网络定位，**不动 GPS**。GPS 信号强时系统优先信 GPS，改了也没用 —— 室内 WiFi 定位场景效果最好。
+
+`dist/` 里的脚本是编译过的，能跑别动。
