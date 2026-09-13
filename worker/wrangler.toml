@@ -1,0 +1,16 @@
+# Cloudflare Workers 部署配置（一键部署按钮和 wrangler CLI 都读这个文件）
+name = "wloc-auth"
+main = "wloc-auth-worker.js"
+compatibility_date = "2026-09-01"
+
+# 部署完成后还需在 Cloudflare 后台手动完成两步（无法在此预填）：
+#   1. 创建 KV 命名空间并绑定到本 Worker，变量名必须是 AUTH_KV
+#   2. 添加 Secret 环境变量 ADMIN_TOKEN = 你的管理密码
+#
+# 也可以用 wrangler CLI 完成绑定：
+#   npx wrangler kv namespace create wloc_auth
+#   然后把返回的 id 填入下面并取消注释：
+#
+# [[kv_namespaces]]
+# binding = "AUTH_KV"
+# id = "你的KV命名空间ID"

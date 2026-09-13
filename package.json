@@ -5,7 +5,7 @@
   "description": "虚拟定位代理模块（Surge/Shadowrocket/Loon/QX/Stash）",
   "scripts": {
     "build": "node build/obfuscate.js",
-    "test": "node test/test-core.js && WLOC_DIST=1 node test/test-core.js && node test/test-worker.mjs"
+    "test": "node test/test-core.js && WLOC_DIST=1 node test/test-core.js && node test/test-settings.js && WLOC_DIST=1 node test/test-settings.js && node test/test-worker.mjs"
   },
   "devDependencies": {
     "javascript-obfuscator": "^4.1.0"

@@ -802,8 +802,10 @@
           if (parseBoolean(stored.enabled, true) === false) cfg.enabled = false;
           if (Number.isFinite(Number(stored.latitude))) cfg.latitude = Number(stored.latitude);
           if (Number.isFinite(Number(stored.longitude))) cfg.longitude = Number(stored.longitude);
-          if (Number.isFinite(Number(stored.horizontalAccuracy))) {
-            cfg.horizontalAccuracy = Math.trunc(Number(stored.horizontalAccuracy));
+          var storedAcc = Number(stored.horizontalAccuracy);
+          if (!Number.isFinite(storedAcc)) storedAcc = Number(stored.accuracy); // 兼容 Yu9191 版存储格式
+          if (Number.isFinite(storedAcc) && storedAcc > 0) {
+            cfg.horizontalAccuracy = Math.trunc(storedAcc);
           }
         }
       } catch (e) { /* 存储内容损坏则忽略 */ }

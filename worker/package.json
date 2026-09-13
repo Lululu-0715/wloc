@@ -1,0 +1,13 @@
+{
+  "name": "wloc-auth",
+  "version": "1.0.0",
+  "private": true,
+  "description": "wloc 卡密系统后端（Cloudflare Workers + KV）",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
