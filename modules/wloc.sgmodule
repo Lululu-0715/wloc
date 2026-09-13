@@ -1,0 +1,12 @@
+#!name=虚拟定位 (WLOC)
+#!desc=拦截 Apple 网络定位响应并替换坐标。在线选点：https://wloc-1993.575613136.workers.dev 。脚本地址已配置好，导入后安装信任 MITM 证书即可使用。
+#!arguments=latitude:22.544577,longitude:113.94114,horizontalAccuracy:25,debug:false,licenseKey:
+
+[Script]
+# 核心：拦截网络定位响应并改写坐标
+wloc = type=http-response,pattern=^https?:\/\/gs-loc(-cn)?\.apple\.com\/clls\/wloc,script-path=https://raw.githubusercontent.com/Lululu-0715/wloc/main/dist/wloc.js,requires-body=true,binary-body-mode=true,timeout=30,argument=latitude={{{latitude}}}&longitude={{{longitude}}}&horizontalAccuracy={{{horizontalAccuracy}}}&debug={{{debug}}}&licenseKey={{{licenseKey}}}
+# 选点：拦截 /wloc-settings/save 写入持久化存储（在线选点页会请求这个地址）
+wloc-settings = type=http-request,pattern=^https?:\/\/gs-loc(-cn)?\.apple\.com\/wloc-settings\/save,script-path=https://raw.githubusercontent.com/Lululu-0715/wloc/main/dist/wloc-settings.js,timeout=10
+
+[MITM]
+hostname = %APPEND% gs-loc.apple.com, gs-loc-cn.apple.com
