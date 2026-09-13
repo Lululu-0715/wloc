@@ -149,6 +149,9 @@ Quantumult X 不支持参数传递，请用在线选点或直接改 `scripts/wlo
 得到形如 `https://wloc-auth.<你的子域名>.workers.dev` 的地址。
 
 > 一键部署要求本仓库为 **public**（Cloudflare 需要拉取代码）。
+> Cloudflare 是从**仓库根目录**构建的：根目录的 `wrangler.toml` 已配置好
+> 指向 `worker/wloc-auth-worker.js`，所以构建命令填不填都能部署成功。
+> 以后每次 push 到 main 分支，Cloudflare 会自动重新部署。
 
 **部署后必做三步**（在 Cloudflare 后台操作）：
 

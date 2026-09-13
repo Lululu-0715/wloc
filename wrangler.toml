@@ -1,0 +1,9 @@
+# 根目录 wrangler 配置 —— Cloudflare 一键部署从仓库根目录构建时读取此文件
+# （worker/wrangler.toml 用于在 worker/ 目录下手动 wrangler deploy，两者并存）
+name = "wloc-auth"
+main = "worker/wloc-auth-worker.js"
+compatibility_date = "2026-09-01"
+
+# 部署完成后还需在 Cloudflare 后台手动完成两步：
+#   1. 创建 KV 命名空间并绑定到本 Worker，变量名必须是 AUTH_KV
+#   2. 添加 Secret 环境变量 ADMIN_TOKEN = 你的管理密码

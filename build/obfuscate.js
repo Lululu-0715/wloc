@@ -47,6 +47,12 @@ let failed = 0;
 for (const name of FILES) {
   const srcPath = path.join(ROOT, "scripts", name);
   const outPath = path.join(ROOT, "dist", name);
+  // 公开仓库可能不包含 scripts/ 源码（只发布 dist/），
+  // Cloudflare 自动构建时跳过即可，不要让整个部署失败
+  if (!fs.existsSync(srcPath)) {
+    console.log("SKIP " + name + "（scripts/ 源码不在仓库中，沿用已提交的 dist/）");
+    continue;
+  }
   const source = fs.readFileSync(srcPath, "utf8");
   try {
     const result = JavaScriptObfuscator.obfuscate(source, OPTIONS);
